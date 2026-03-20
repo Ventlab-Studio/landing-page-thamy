@@ -1,0 +1,2237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content Calendar Pro — Nómada Consciente</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --cream: #F5EFE4;
+  --cream-dark: #EDE4D5;
+  --terra: #C4704A;
+  --terra-light: #D4856A;
+  --terra-pale: #F0E0D6;
+  --sage: #7A9E7E;
+  --sage-pale: #D8E8DA;
+  --ink: #211B14;
+  --ink-mid: #4A3F32;
+  --ink-soft: #7A6E62;
+  --gold: #C9A84C;
+  --warm-white: #FDF9F4;
+  --off-black: #1A1510;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--warm-white);
+  color: var(--ink);
+  font-family: 'Instrument Sans', sans-serif;
+  font-weight: 300;
+  line-height: 1.6;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ── CUSTOM CURSOR ── */
+.cursor-dot {
+  width: 8px; height: 8px;
+  background: var(--terra);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: transform .1s ease;
+}
+.cursor-ring {
+  width: 36px; height: 36px;
+  border: 1px solid rgba(196,112,74,.4);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: transform .15s ease, width .3s ease, height .3s ease, border-color .3s ease;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(32px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity:0; }
+  to   { opacity:1; }
+}
+@keyframes slowZoom {
+  from { transform: scale(1); }
+  to   { transform: scale(1.06); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(196,112,74,.4); }
+  70%  { box-shadow: 0 0 0 16px rgba(196,112,74,0); }
+  100% { box-shadow: 0 0 0 0 rgba(196,112,74,0); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .7s ease, transform .7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: .1s; }
+.reveal-delay-2 { transition-delay: .2s; }
+.reveal-delay-3 { transition-delay: .3s; }
+.reveal-delay-4 { transition-delay: .4s; }
+.reveal-delay-5 { transition-delay: .5s; }
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 20px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background .4s ease, padding .4s ease;
+}
+nav.scrolled {
+  background: rgba(253,249,244,.95);
+  backdrop-filter: blur(12px);
+  padding: 14px 48px;
+  border-bottom: 1px solid rgba(196,112,74,.12);
+}
+.nav-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  font-style: italic;
+  color: var(--ink);
+  font-weight: 400;
+}
+.nav-cta {
+  background: var(--terra);
+  color: white;
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 10px 24px;
+  text-decoration: none;
+  transition: background .2s ease, transform .2s ease;
+}
+.nav-cta:hover { background: var(--terra-light); transform: translateY(-1px); }
+
+/* ── ANNOUNCEMENT BAR ── */
+.announce {
+  background: var(--ink);
+  color: rgba(253,249,244,.7);
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  position: relative;
+  z-index: 101;
+}
+.announce span { color: var(--terra-light); }
+
+/* ══════════════════════════════════════
+   HERO
+══════════════════════════════════════ */
+.hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-left {
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 140px 72px 100px 72px;
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.hero-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 0% 100%, rgba(196,112,74,.15) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(122,158,126,.08) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero-eyebrow {
+  font-size: 10px;
+  letter-spacing: .4em;
+  text-transform: uppercase;
+  color: var(--terra-light);
+  margin-bottom: 28px;
+  animation: fadeUp .8s ease both;
+}
+
+.hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(3rem, 4.5vw, 4.8rem);
+  font-weight: 300;
+  color: var(--warm-white);
+  line-height: 1.06;
+  letter-spacing: -.02em;
+  animation: fadeUp .8s ease .1s both;
+}
+.hero-title em {
+  font-style: italic;
+  color: var(--terra-light);
+}
+.hero-title strong {
+  font-weight: 500;
+  display: block;
+}
+
+.hero-sub {
+  margin-top: 28px;
+  font-size: 15px;
+  color: rgba(253,249,244,.55);
+  max-width: 400px;
+  line-height: 1.8;
+  animation: fadeUp .8s ease .2s both;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 36px;
+  margin-top: 52px;
+  padding-top: 36px;
+  border-top: 1px solid rgba(253,249,244,.08);
+  animation: fadeUp .8s ease .3s both;
+}
+
+.hero-stat-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem;
+  color: var(--terra-light);
+  font-weight: 300;
+  line-height: 1;
+}
+.hero-stat-label {
+  font-size: 11px;
+  color: rgba(253,249,244,.35);
+  margin-top: 4px;
+  letter-spacing: .05em;
+}
+
+.hero-cta-group {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 48px;
+  animation: fadeUp .8s ease .35s both;
+}
+
+.btn-primary {
+  background: var(--terra);
+  color: white;
+  font-size: 13px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 18px 40px;
+  text-decoration: none;
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  transition: transform .25s ease;
+  animation: pulse-ring 2.5s ease 2s 3;
+}
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s ease 1.5s 2;
+}
+.btn-primary:hover { transform: translateY(-3px); }
+.btn-primary:hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.08);
+}
+
+.hero-cta-note {
+  font-size: 12px;
+  color: rgba(253,249,244,.3);
+}
+.hero-cta-note strong { color: var(--sage); display: block; }
+
+.hero-right {
+  position: relative;
+  overflow: hidden;
+}
+.hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: slowZoom 12s ease-in-out infinite alternate;
+  display: block;
+}
+.hero-right::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(26,21,16,.5) 0%, transparent 40%);
+}
+
+/* ── PRICE TAG flotante ── */
+.price-bubble {
+  position: absolute;
+  bottom: 60px;
+  right: 48px;
+  background: var(--warm-white);
+  padding: 20px 28px;
+  z-index: 10;
+  animation: float 4s ease-in-out infinite;
+  box-shadow: 0 24px 80px rgba(26,21,16,.25);
+}
+.price-bubble .was {
+  font-size: 11px;
+  color: var(--ink-soft);
+  text-decoration: line-through;
+  letter-spacing: .08em;
+}
+.price-bubble .now {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.8rem;
+  color: var(--terra);
+  font-weight: 300;
+  line-height: 1;
+  margin-top: 2px;
+}
+.price-bubble .note {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-top: 6px;
+}
+
+/* ══════════════════════════════════════
+   MARQUEE
+══════════════════════════════════════ */
+.marquee-wrap {
+  background: var(--terra);
+  padding: 14px 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.marquee-track {
+  display: inline-flex;
+  animation: marquee 22s linear infinite;
+}
+.marquee-item {
+  font-size: 11px;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.85);
+  padding: 0 40px;
+}
+.marquee-sep {
+  color: rgba(255,255,255,.35);
+  margin: 0 8px;
+}
+
+/* ══════════════════════════════════════
+   PAIN SECTION
+══════════════════════════════════════ */
+.pain {
+  padding: 120px 0 100px;
+  position: relative;
+}
+.pain::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, var(--terra), transparent);
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 60px;
+}
+.container-narrow {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 0 60px;
+}
+
+.section-tag {
+  font-size: 10px;
+  letter-spacing: .4em;
+  text-transform: uppercase;
+  color: var(--terra);
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.2rem, 4vw, 3.6rem);
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -.015em;
+}
+.section-title em { font-style: italic; color: var(--terra); }
+
+.pain-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  margin-top: 72px;
+  align-items: start;
+}
+
+.pain-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.pain-item {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 20px;
+  padding: 28px;
+  background: var(--cream);
+  border: 1px solid var(--cream-dark);
+  transition: border-color .25s ease;
+}
+.pain-item:hover { border-color: var(--terra); }
+
+.pain-icon {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+
+.pain-item h4 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.pain-item p {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+
+.pain-right {
+  padding: 52px 48px;
+  background: var(--ink);
+  position: relative;
+  overflow: hidden;
+}
+.pain-right::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 80% 100%, rgba(196,112,74,.12) 0%, transparent 60%);
+}
+
+.pain-quote {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+  font-style: italic;
+  color: var(--warm-white);
+  line-height: 1.45;
+  font-weight: 300;
+  position: relative;
+  z-index: 1;
+}
+.pain-quote::before {
+  content: '"';
+  font-size: 6rem;
+  color: rgba(196,112,74,.2);
+  position: absolute;
+  top: -20px; left: -10px;
+  line-height: 1;
+  font-style: normal;
+}
+
+.pain-author {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+.pain-author img {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(196,112,74,.3);
+}
+.pain-author-name {
+  font-size: 14px;
+  color: var(--warm-white);
+  font-weight: 400;
+}
+.pain-author-role {
+  font-size: 11px;
+  color: rgba(253,249,244,.4);
+  margin-top: 2px;
+}
+
+.pain-cta {
+  margin-top: 44px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(253,249,244,.08);
+  position: relative;
+  z-index: 1;
+}
+.pain-cta p {
+  font-size: 13px;
+  color: rgba(253,249,244,.5);
+  margin-bottom: 16px;
+}
+.btn-outline-white {
+  border: 1px solid rgba(253,249,244,.25);
+  color: var(--warm-white);
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 14px 28px;
+  text-decoration: none;
+  display: inline-block;
+  transition: background .25s, border-color .25s;
+}
+.btn-outline-white:hover {
+  background: rgba(253,249,244,.06);
+  border-color: var(--terra);
+}
+
+/* ══════════════════════════════════════
+   INTRODUCING
+══════════════════════════════════════ */
+.introducing {
+  background: var(--cream-dark);
+  padding: 120px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.intro-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.intro-mockup {
+  position: relative;
+}
+
+.mockup-frame {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 40px 120px rgba(26,21,16,.18), 0 8px 32px rgba(26,21,16,.08);
+  overflow: hidden;
+  position: relative;
+}
+
+.mockup-bar {
+  background: #F0EDE8;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #E5E0D8;
+}
+.mockup-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.mockup-dot:nth-child(1) { background: #FF5F57; }
+.mockup-dot:nth-child(2) { background: #FEBC2E; }
+.mockup-dot:nth-child(3) { background: #28C840; }
+
+.mockup-url {
+  background: white;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #9A9187;
+  padding: 4px 12px;
+  margin-left: 12px;
+  flex: 1;
+  max-width: 200px;
+}
+
+.mockup-img {
+  width: 100%;
+  display: block;
+}
+
+.mockup-badge {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  background: var(--terra);
+  color: white;
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 10px 18px;
+  box-shadow: 0 8px 24px rgba(196,112,74,.4);
+}
+
+.intro-content {}
+
+.product-name-display {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.5rem, 3.5vw, 3.8rem);
+  font-weight: 300;
+  line-height: 1.08;
+  letter-spacing: -.02em;
+  margin-top: 20px;
+}
+.product-name-display em {
+  font-style: italic;
+  color: var(--terra);
+  display: block;
+}
+
+.intro-description {
+  font-size: 15px;
+  color: var(--ink-mid);
+  line-height: 1.85;
+  margin-top: 24px;
+  max-width: 440px;
+}
+
+.format-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 28px;
+}
+.pill {
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  border: 1px solid var(--cream-dark);
+  background: var(--warm-white);
+  color: var(--ink-soft);
+  padding: 7px 16px;
+}
+.pill.accent {
+  background: var(--terra-pale);
+  border-color: var(--terra);
+  color: var(--terra);
+}
+
+.value-intro {
+  margin-top: 48px;
+  padding: 28px 32px;
+  background: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.value-intro-text {
+  font-size: 13px;
+  color: rgba(253,249,244,.6);
+  line-height: 1.7;
+}
+.value-intro-text strong {
+  color: var(--terra-light);
+  font-weight: 400;
+}
+.value-intro-price {
+  text-align: right;
+  flex-shrink: 0;
+}
+.vip-was {
+  font-size: 11px;
+  color: rgba(253,249,244,.3);
+  text-decoration: line-through;
+}
+.vip-now {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.2rem;
+  color: var(--terra-light);
+  font-weight: 300;
+  line-height: 1;
+}
+
+/* ══════════════════════════════════════
+   LIFESTYLE STRIP
+══════════════════════════════════════ */
+.lifestyle-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  height: 320px;
+  overflow: hidden;
+}
+.lifestyle-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(20%) sepia(10%);
+  transition: filter .4s ease, transform .4s ease;
+  display: block;
+}
+.lifestyle-img:hover {
+  filter: grayscale(0%) sepia(0%);
+  transform: scale(1.04);
+}
+
+/* ══════════════════════════════════════
+   WHAT'S INSIDE (Value Stack)
+══════════════════════════════════════ */
+.inside {
+  padding: 120px 0;
+  background: var(--warm-white);
+}
+
+.inside-header {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto 80px;
+}
+
+.inside-subtitle {
+  font-size: 15px;
+  color: var(--ink-soft);
+  margin-top: 20px;
+  line-height: 1.75;
+}
+
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: var(--cream-dark);
+}
+
+.module {
+  background: var(--warm-white);
+  padding: 44px 36px;
+  position: relative;
+  overflow: hidden;
+  transition: background .25s ease;
+}
+.module:hover { background: var(--cream); }
+
+.module::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--terra);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .35s ease;
+}
+.module:hover::after { transform: scaleX(1); }
+
+.module-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3.5rem;
+  color: var(--cream-dark);
+  line-height: 1;
+  font-weight: 300;
+  margin-bottom: 20px;
+  transition: color .25s ease;
+}
+.module:hover .module-num { color: var(--terra-pale); }
+
+.module-icon { font-size: 22px; margin-bottom: 16px; display: block; }
+
+.module-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+.module-desc {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.75;
+  margin-bottom: 20px;
+}
+
+.module-items {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.module-items li {
+  font-size: 12px;
+  color: var(--ink-mid);
+  padding-left: 16px;
+  position: relative;
+  line-height: 1.5;
+}
+.module-items li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--terra);
+  font-size: 10px;
+}
+
+/* bonus section */
+.bonuses {
+  margin-top: 60px;
+  padding: 60px;
+  background: var(--ink);
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 60px;
+  align-items: center;
+}
+.bonuses-label {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3rem;
+  font-style: italic;
+  color: var(--terra-light);
+  font-weight: 300;
+  line-height: 1.1;
+}
+.bonus-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.bonus-item {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  border: 1px solid rgba(253,249,244,.07);
+  transition: border-color .2s;
+}
+.bonus-item:hover { border-color: rgba(196,112,74,.3); }
+.bonus-emoji { font-size: 20px; flex-shrink: 0; }
+.bonus-name {
+  font-size: 14px;
+  color: var(--warm-white);
+  font-weight: 400;
+  margin-bottom: 4px;
+}
+.bonus-desc { font-size: 12px; color: rgba(253,249,244,.45); line-height: 1.6; }
+.bonus-val {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  color: var(--sage);
+  font-weight: 400;
+}
+
+/* ══════════════════════════════════════
+   FOR WHO
+══════════════════════════════════════ */
+.forwho {
+  background: var(--cream-dark);
+  padding: 100px 0;
+}
+
+.forwho-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  margin-top: 60px;
+  background: rgba(196,112,74,.15);
+}
+
+.forwho-col {
+  background: var(--cream);
+  padding: 52px 44px;
+}
+.forwho-col:last-child {
+  background: var(--warm-white);
+}
+
+.forwho-head {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem;
+  margin-bottom: 28px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.check-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.check-list li {
+  font-size: 14px;
+  color: var(--ink-mid);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  line-height: 1.6;
+}
+.check {
+  flex-shrink: 0;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  margin-top: 1px;
+}
+.check.yes { background: var(--sage-pale); color: var(--sage); }
+.check.no  { background: var(--terra-pale); color: var(--terra); }
+
+/* ══════════════════════════════════════
+   SOCIAL PROOF
+══════════════════════════════════════ */
+.proof {
+  padding: 120px 0;
+  background: var(--warm-white);
+}
+
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 64px;
+}
+
+.testimonial {
+  padding: 40px;
+  background: var(--cream);
+  border: 1px solid var(--cream-dark);
+  position: relative;
+  transition: box-shadow .3s ease, transform .3s ease;
+}
+.testimonial:hover {
+  box-shadow: 0 16px 60px rgba(26,21,16,.08);
+  transform: translateY(-4px);
+}
+
+.stars {
+  color: var(--gold);
+  font-size: 14px;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.test-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.7;
+  font-weight: 400;
+  margin-bottom: 24px;
+}
+
+.test-author {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 20px;
+  border-top: 1px solid var(--cream-dark);
+}
+.test-author img {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  filter: sepia(10%);
+}
+.test-name {
+  font-size: 13px;
+  color: var(--ink);
+  font-weight: 400;
+}
+.test-role {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+.test-platform {
+  margin-left: auto;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--terra);
+  background: var(--terra-pale);
+  padding: 3px 10px;
+}
+
+.proof-numbers {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  background: var(--cream-dark);
+  margin-top: 60px;
+}
+.proof-num-item {
+  background: var(--warm-white);
+  text-align: center;
+  padding: 44px 24px;
+}
+.proof-num-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3rem;
+  color: var(--terra);
+  font-weight: 300;
+  line-height: 1;
+  display: block;
+}
+.proof-num-label {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 8px;
+  letter-spacing: .08em;
+}
+
+/* ══════════════════════════════════════
+   HOW IT WORKS
+══════════════════════════════════════ */
+.how {
+  background: var(--ink);
+  padding: 120px 0;
+  position: relative;
+  overflow: hidden;
+}
+.how::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 50% at 50% 100%, rgba(196,112,74,.08) 0%, transparent 60%);
+}
+
+.how .section-title { color: var(--warm-white); }
+.how .section-tag   { color: var(--terra); }
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  background: rgba(253,249,244,.04);
+  margin-top: 72px;
+  position: relative;
+  z-index: 1;
+}
+
+.step {
+  background: var(--off-black);
+  padding: 40px 32px;
+  position: relative;
+  transition: background .25s;
+}
+.step:hover { background: rgba(253,249,244,.03); }
+
+.step-line {
+  position: absolute;
+  top: 56px; right: -1px;
+  width: 2px; height: 24px;
+  background: linear-gradient(to bottom, var(--terra), transparent);
+}
+.step:last-child .step-line { display: none; }
+
+.step-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 4rem;
+  color: rgba(196,112,74,.15);
+  font-weight: 300;
+  line-height: 1;
+  margin-bottom: 24px;
+}
+
+.step-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  color: var(--warm-white);
+  margin-bottom: 12px;
+  font-weight: 400;
+}
+
+.step-desc {
+  font-size: 13px;
+  color: rgba(253,249,244,.45);
+  line-height: 1.7;
+}
+
+/* ══════════════════════════════════════
+   GUARANTEE
+══════════════════════════════════════ */
+.guarantee {
+  padding: 100px 0;
+  background: var(--cream);
+}
+
+.guarantee-inner {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 60px;
+  align-items: center;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 60px;
+}
+
+.guarantee-badge {
+  width: 140px; height: 140px;
+  border-radius: 50%;
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex-shrink: 0;
+  border: 3px solid var(--terra);
+  padding: 20px;
+  animation: float 5s ease-in-out infinite;
+}
+.guarantee-badge .g-days {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.8rem;
+  color: var(--terra-light);
+  font-weight: 300;
+  line-height: 1;
+}
+.guarantee-badge .g-label {
+  font-size: 9px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: rgba(253,249,244,.5);
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
+.guarantee-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.2rem;
+  font-weight: 300;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.guarantee-title em { font-style: italic; color: var(--terra); }
+
+.guarantee-text {
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.8;
+}
+
+/* ══════════════════════════════════════
+   PRICING / CTA
+══════════════════════════════════════ */
+.pricing {
+  padding: 120px 0;
+  background: var(--warm-white);
+}
+
+.pricing-card-wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 60px;
+}
+
+.pricing-card {
+  background: var(--ink);
+  padding: 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pricing-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(196,112,74,.12) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 60% at 0% 100%, rgba(122,158,126,.06) 0%, transparent 50%);
+}
+
+.pricing-label {
+  font-size: 10px;
+  letter-spacing: .4em;
+  text-transform: uppercase;
+  color: var(--terra-light);
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.pricing-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem;
+  color: var(--warm-white);
+  font-weight: 300;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.price-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+.price-was {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem;
+  color: rgba(253,249,244,.25);
+  text-decoration: line-through;
+  font-weight: 300;
+}
+.price-now {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 4rem;
+  color: var(--terra-light);
+  font-weight: 300;
+  line-height: 1;
+}
+.price-note {
+  font-size: 12px;
+  color: rgba(253,249,244,.35);
+  margin-bottom: 36px;
+  position: relative;
+  z-index: 1;
+}
+
+.includes-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 1;
+}
+.includes-list li {
+  font-size: 14px;
+  color: rgba(253,249,244,.75);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(253,249,244,.05);
+}
+.includes-list li:last-child { border-bottom: none; }
+.inc-check {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: rgba(122,158,126,.2);
+  color: var(--sage);
+  font-size: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.inc-val {
+  margin-left: auto;
+  font-size: 12px;
+  color: rgba(253,249,244,.3);
+}
+
+.btn-buy {
+  width: 100%;
+  background: var(--terra);
+  color: white;
+  font-size: 14px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 20px;
+  text-decoration: none;
+  display: block;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  transition: transform .25s ease, background .25s;
+}
+.btn-buy:hover { background: var(--terra-light); transform: translateY(-2px); }
+.btn-buy::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);
+  transform: translateX(-100%);
+  transition: transform .6s ease;
+}
+.btn-buy:hover::before { transform: translateX(100%); }
+
+.security-row {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 20px;
+  position: relative;
+  z-index: 1;
+}
+.security-item {
+  font-size: 11px;
+  color: rgba(253,249,244,.3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.value-stack-total {
+  padding: 20px 0;
+  border-top: 1px solid rgba(253,249,244,.08);
+  border-bottom: 1px solid rgba(253,249,244,.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 36px;
+  position: relative;
+  z-index: 1;
+}
+.vst-label {
+  font-size: 11px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: rgba(253,249,244,.35);
+}
+.vst-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  color: rgba(253,249,244,.4);
+  text-decoration: line-through;
+  font-weight: 300;
+}
+.vst-you-pay {
+  font-size: 12px;
+  color: var(--sage);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.vst-you-price {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem;
+  color: var(--terra-light);
+  font-weight: 300;
+}
+
+/* ══════════════════════════════════════
+   FAQ
+══════════════════════════════════════ */
+.faq {
+  background: var(--cream);
+  padding: 100px 0;
+}
+
+.faq-list {
+  max-width: 680px;
+  margin: 60px auto 0;
+  padding: 0 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.faq-item {
+  background: var(--warm-white);
+  border: 1px solid var(--cream-dark);
+  overflow: hidden;
+}
+
+.faq-q {
+  padding: 24px 28px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  color: var(--ink);
+  font-weight: 400;
+  user-select: none;
+  transition: background .2s;
+}
+.faq-q:hover { background: var(--cream); }
+
+.faq-arrow {
+  font-size: 14px;
+  color: var(--terra);
+  transition: transform .3s ease;
+  flex-shrink: 0;
+  margin-left: 16px;
+}
+.faq-item.open .faq-arrow { transform: rotate(45deg); }
+
+.faq-a {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .4s ease, padding .3s ease;
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.8;
+}
+.faq-item.open .faq-a {
+  max-height: 400px;
+  padding: 0 28px 24px;
+}
+
+/* ══════════════════════════════════════
+   FINAL CTA
+══════════════════════════════════════ */
+.final-cta {
+  background: var(--ink);
+  padding: 140px 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.final-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 80% at 50% 100%, rgba(196,112,74,.15) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 20% 20%, rgba(122,158,126,.05) 0%, transparent 50%);
+}
+
+.final-cta-inner { position: relative; z-index: 1; }
+
+.final-cta h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.5rem, 5vw, 5rem);
+  font-weight: 300;
+  color: var(--warm-white);
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  max-width: 700px;
+  margin: 0 auto 28px;
+}
+.final-cta h2 em {
+  font-style: italic;
+  color: var(--terra-light);
+}
+
+.final-cta p {
+  font-size: 15px;
+  color: rgba(253,249,244,.5);
+  margin-bottom: 52px;
+}
+
+.final-cta .btn-primary {
+  font-size: 14px;
+  padding: 22px 56px;
+}
+
+.final-note {
+  margin-top: 28px;
+  font-size: 12px;
+  color: rgba(253,249,244,.25);
+  letter-spacing: .06em;
+}
+
+/* ══════════════════════════════════════
+   FOOTER
+══════════════════════════════════════ */
+footer {
+  background: var(--off-black);
+  padding: 40px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.footer-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 1.1rem;
+  color: rgba(253,249,244,.25);
+  font-weight: 300;
+}
+.footer-links {
+  display: flex;
+  gap: 28px;
+}
+.footer-links a {
+  font-size: 11px;
+  color: rgba(253,249,244,.2);
+  text-decoration: none;
+  letter-spacing: .08em;
+  transition: color .2s;
+}
+.footer-links a:hover { color: rgba(253,249,244,.5); }
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════ */
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-right { height: 50vw; }
+  .hero-left { padding: 120px 32px 60px; }
+  .price-bubble { bottom: 24px; right: 24px; }
+  .container { padding: 0 28px; }
+  .container-narrow { padding: 0 28px; }
+  .pain-grid, .intro-layout, .forwho-grid { grid-template-columns: 1fr; }
+  .modules-grid { grid-template-columns: 1fr 1fr; }
+  .lifestyle-strip { grid-template-columns: 1fr 1fr; height: auto; }
+  .lifestyle-img { height: 200px; }
+  .proof-grid { grid-template-columns: 1fr; }
+  .proof-numbers { grid-template-columns: 1fr 1fr; }
+  .steps { grid-template-columns: 1fr 1fr; }
+  .bonuses { grid-template-columns: 1fr; gap: 32px; padding: 40px; }
+  .guarantee-inner { grid-template-columns: 1fr; text-align: center; padding: 0 28px; }
+  .guarantee-badge { margin: 0 auto; }
+  .pricing-card-wrap { padding: 0 28px; }
+  .pricing-card { padding: 40px 32px; }
+  .faq-list { padding: 0 28px; }
+  footer { flex-direction: column; gap: 20px; text-align: center; }
+  nav { padding: 16px 24px; }
+  nav.scrolled { padding: 12px 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor-dot" id="dot"></div>
+<div class="cursor-ring" id="ring"></div>
+
+<!-- ══ ANNOUNCE BAR ══ -->
+<div class="announce">
+  🌿 Acceso inmediato tras el pago · <span>Incluye actualizaciones de por vida</span> · Solo $19 USD
+</div>
+
+<!-- ══ NAV ══ -->
+<nav id="nav">
+  <div class="nav-logo">Nómada Consciente</div>
+  <a href="#pricing" class="nav-cta">Obtener ahora — $19</a>
+</nav>
+
+<!-- ══════════════════════════════════════
+     HERO
+══════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-left">
+    <p class="hero-eyebrow">Plantilla Notion · Edición Creadora</p>
+    <h1 class="hero-title">
+      Deja de improvisar<br>tu contenido.<br>
+      <em>Empieza a crearlo<br>con sistema.</em>
+    </h1>
+    <p class="hero-sub">El workspace en Notion que Thamy usa para planear, producir y analizar su contenido — adaptado para que tú lo tengas funcionando en menos de una hora.</p>
+
+    <div class="hero-stats">
+      <div>
+        <div class="hero-stat-num">6</div>
+        <div class="hero-stat-label">módulos integrados</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">+200</div>
+        <div class="hero-stat-label">creadoras ya usan este sistema</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">∞</div>
+        <div class="hero-stat-label">actualizaciones incluidas</div>
+      </div>
+    </div>
+
+    <div class="hero-cta-group">
+      <a href="#pricing" class="btn-primary">Quiero mi sistema — $19</a>
+      <div class="hero-cta-note">
+        <strong>✓ Garantía 7 días</strong>
+        Acceso inmediato · Pago seguro
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <img
+      src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=85&auto=format&fit=crop"
+      alt="Creadora de contenido trabajando"
+      class="hero-img"
+    />
+    <div class="price-bubble">
+      <div class="was">Valor real $97</div>
+      <div class="now">$19</div>
+      <div class="note">pago único · acceso de por vida</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ MARQUEE ══ -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span class="marquee-item">Calendario Editorial <span class="marquee-sep">·</span></span>
+    <span class="marquee-item">Tracker de Métricas <span class="marquee-sep">·</span></span>
+    <span class="marquee-item">Pipeline de Producción <span class="marquee-sep">·</span></span>
+    <span class="marquee-item">Banco de Ideas <span class="marquee-sep">·</span></span>
+    <span class="marquee-item">Reciclaje de Contenido <span class="marquee-sep">·</span></span>
+    <span class="marquee-item">Dashboard de Pilares <span class="marquee-sep">·</span></span>
+    <span class="marquee-item">Acceso Inmediato <span class="marquee-sep">·</span></span>
+    <span class="marquee-item">Calendario Editorial <span class="marquee-sep">·</span></span>
+    <span class="marquee-item">Tracker de Métricas <span class="marquee-sep">·</span></span>
+    <span class="marquee-item">Pipeline de Producción <span class="marquee-sep">·</span></span>
+    <span class="marquee-item">Banco de Ideas <span class="marquee-sep">·</span></span>
+    <span class="marquee-item">Reciclaje de Contenido <span class="marquee-sep">·</span></span>
+    <span class="marquee-item">Dashboard de Pilares <span class="marquee-sep">·</span></span>
+    <span class="marquee-item">Acceso Inmediato <span class="marquee-sep">·</span></span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAIN
+══════════════════════════════════════ -->
+<section class="pain">
+  <div class="container">
+    <div class="pain-grid">
+      <div>
+        <p class="section-tag reveal">¿Te suena familiar?</p>
+        <h2 class="section-title reveal reveal-delay-1">
+          El contenido sin sistema<br>
+          te roba <em>la energía<br>de crear.</em>
+        </h2>
+        <div style="height:1px; background:linear-gradient(to right, var(--terra), transparent); width:60px; margin:28px 0;" class="reveal reveal-delay-2"></div>
+
+        <div class="pain-list">
+          <div class="pain-item reveal reveal-delay-2">
+            <div class="pain-icon">🌀</div>
+            <div>
+              <h4>La parálisis del "¿y qué publico hoy?"</h4>
+              <p>Abres Instagram con ganas de crear y terminas cerrando la app sin haber publicado nada. Otra vez.</p>
+            </div>
+          </div>
+          <div class="pain-item reveal reveal-delay-3">
+            <div class="pain-icon">📉</div>
+            <div>
+              <h4>Publicas sin saber si está funcionando</h4>
+              <p>Miras los likes, pero no tienes ni idea de qué contenido convierte, qué pilar conecta más, ni qué repetir.</p>
+            </div>
+          </div>
+          <div class="pain-item reveal reveal-delay-4">
+            <div class="pain-icon">⏰</div>
+            <div>
+              <h4>El contenido te toma el doble de tiempo</h4>
+              <p>Sin un pipeline claro, cada post se convierte en una mini-crisis: ¿guión? ¿grabé? ¿edité? ¿publiqué? ¿dónde está?</p>
+            </div>
+          </div>
+          <div class="pain-item reveal reveal-delay-5">
+            <div class="pain-icon">🔁</div>
+            <div>
+              <h4>Estás creando desde cero cada semana</h4>
+              <p>Tienes contenido brillante que ya publicaste y que el 90% de tu audiencia nunca vio. Pero no tienes sistema de reciclaje.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pain-right reveal reveal-delay-2">
+        <p class="pain-quote">
+          "Yo también viví esto. Publicaba tres veces por semana sintiéndome agotada y sin resultados. El problema no era mi creatividad — era que no tenía un sistema."
+        </p>
+        <div class="pain-author">
+          <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&q=80&auto=format&fit=crop&crop=face" alt="Thamy">
+          <div>
+            <div class="pain-author-name">Thamy</div>
+            <div class="pain-author-role">Creadora · Nómada Consciente</div>
+          </div>
+        </div>
+        <div class="pain-cta">
+          <p>Encontré la solución. Y ahora la estoy poniendo en tus manos.</p>
+          <a href="#pricing" class="btn-outline-white">Ver el sistema →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     INTRODUCING
+══════════════════════════════════════ -->
+<section class="introducing">
+  <div class="container">
+    <div class="intro-layout">
+      <div class="intro-mockup reveal">
+        <div class="mockup-frame">
+          <div class="mockup-bar">
+            <div class="mockup-dot"></div>
+            <div class="mockup-dot"></div>
+            <div class="mockup-dot"></div>
+            <div class="mockup-url">notion.so/nomadaconsciente</div>
+          </div>
+          <img
+            src="https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=800&q=85&auto=format&fit=crop"
+            alt="Content Calendar Pro en Notion"
+            class="mockup-img"
+          />
+        </div>
+        <div class="mockup-badge">Acceso Inmediato</div>
+      </div>
+
+      <div class="intro-content">
+        <p class="section-tag reveal">Presentando</p>
+        <h2 class="product-name-display reveal reveal-delay-1">
+          Content Calendar Pro
+          <em>— Edición Creadora</em>
+        </h2>
+        <p class="intro-description reveal reveal-delay-2">
+          Un workspace completo en Notion diseñado específicamente para creadoras de contenido que quieren publicar con consistencia, sin sacrificar su salud mental ni su tiempo de vida.
+          <br><br>
+          No es una plantilla genérica de internet. Es el sistema exacto que Thamy construyó (y sigue usando) para gestionar su contenido en múltiples plataformas mientras viaja y vive libre.
+        </p>
+
+        <div class="format-pills reveal reveal-delay-3">
+          <span class="pill accent">📦 Plantilla Notion</span>
+          <span class="pill">Acceso de por vida</span>
+          <span class="pill">Actualizaciones incluidas</span>
+          <span class="pill">Tutorial de setup</span>
+        </div>
+
+        <div class="value-intro reveal reveal-delay-4">
+          <div class="value-intro-text">
+            Tiempo promedio de setup:<br>
+            <strong>45 minutos y estás lista para publicar tu primer calendario.</strong>
+          </div>
+          <div class="value-intro-price">
+            <div class="vip-was">$97</div>
+            <div class="vip-now">$19</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ LIFESTYLE STRIP ══ -->
+<div class="lifestyle-strip">
+  <img src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=600&q=80&auto=format&fit=crop" alt="" class="lifestyle-img">
+  <img src="https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=600&q=80&auto=format&fit=crop" alt="" class="lifestyle-img">
+  <img src="https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=600&q=80&auto=format&fit=crop" alt="" class="lifestyle-img">
+  <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&q=80&auto=format&fit=crop" alt="" class="lifestyle-img">
+</div>
+
+<!-- ══════════════════════════════════════
+     WHAT'S INSIDE
+══════════════════════════════════════ -->
+<section class="inside">
+  <div class="container">
+    <div class="inside-header reveal">
+      <p class="section-tag">Lo que incluye</p>
+      <h2 class="section-title">6 módulos que trabajan<br><em>juntos por ti.</em></h2>
+      <p class="inside-subtitle">Cada módulo resuelve una parte del problema. Juntos, forman el sistema de contenido más completo que tendrás.</p>
+    </div>
+
+    <div class="modules-grid">
+      <div class="module reveal">
+        <div class="module-num">01</div>
+        <span class="module-icon">💡</span>
+        <div class="module-title">Banco de Ideas Infinitas</div>
+        <p class="module-desc">Nunca más el bloqueo creativo. Captura ideas en el momento que llegan y encuéntralas exactamente cuando las necesites.</p>
+        <ul class="module-items">
+          <li>Sistema de etiquetas por pilar y formato</li>
+          <li>Filtros por plataforma y estado</li>
+          <li>Campo de inspiración y referentes</li>
+          <li>Vista de ideas pendientes por explotar</li>
+        </ul>
+      </div>
+
+      <div class="module reveal reveal-delay-1">
+        <div class="module-num">02</div>
+        <span class="module-icon">📅</span>
+        <div class="module-title">Calendario Editorial Mensual + Semanal</div>
+        <p class="module-desc">Visualiza todo tu mes de un vistazo. Arrastra, suelta, reorganiza. El caos de "¿qué publico mañana?" desaparece para siempre.</p>
+        <ul class="module-items">
+          <li>Vista calendario visual interactiva</li>
+          <li>Planificación por plataforma: IG, TikTok, YT, Newsletter</li>
+          <li>Vista semanal de producción</li>
+          <li>Indicadores de balance entre pilares</li>
+        </ul>
+      </div>
+
+      <div class="module reveal reveal-delay-2">
+        <div class="module-num">03</div>
+        <span class="module-icon">🎬</span>
+        <div class="module-title">Pipeline de Producción</div>
+        <p class="module-desc">Del guión al "publicado" sin perder nada en el camino. Cada pieza de contenido tiene su estado, fecha y responsable claro.</p>
+        <ul class="module-items">
+          <li>Kanban: Idea → Guión → Grabación → Edición → Publicado</li>
+          <li>Checklist de publicación por plataforma</li>
+          <li>Campo de caption y hashtags integrado</li>
+          <li>Alerta visual de contenido atrasado</li>
+        </ul>
+      </div>
+
+      <div class="module reveal">
+        <div class="module-num">04</div>
+        <span class="module-icon">📊</span>
+        <div class="module-title">Tracker de Métricas</div>
+        <p class="module-desc">Deja de adivinar qué funciona. Registra tus métricas clave y deja que los datos guíen tu próxima semana de contenido.</p>
+        <ul class="module-items">
+          <li>Registro semanal por plataforma</li>
+          <li>Métricas clave: alcance, guardados, conversiones</li>
+          <li>Identificación de posts con mejor rendimiento</li>
+          <li>Tendencia mensual de crecimiento</li>
+        </ul>
+      </div>
+
+      <div class="module reveal reveal-delay-1">
+        <div class="module-num">05</div>
+        <span class="module-icon">♻️</span>
+        <div class="module-title">Banco de Reciclaje de Contenido</div>
+        <p class="module-desc">Tu mejor contenido merece ser visto más de una vez. Sistema para transformar un video en 5 formatos diferentes sin crear desde cero.</p>
+        <ul class="module-items">
+          <li>Biblioteca de contenido reciclable</li>
+          <li>Guía de transformación por formato</li>
+          <li>Historial de reutilizaciones</li>
+          <li>Sugerencias de contenido evergreen</li>
+        </ul>
+      </div>
+
+      <div class="module reveal reveal-delay-2">
+        <div class="module-num">06</div>
+        <span class="module-icon">🏠</span>
+        <div class="module-title">Dashboard Central de Pilares</div>
+        <p class="module-desc">El panel de mando de tu marca. Ve de un solo vistazo si tu contenido está alineado con tus pilares, tus metas y tu audiencia.</p>
+        <ul class="module-items">
+          <li>Balance visual de contenido por pilar</li>
+          <li>KPIs mensuales de marca personal</li>
+          <li>Metas de crecimiento y avance</li>
+          <li>Revisión semanal guiada</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- BONUSES -->
+    <div class="bonuses reveal">
+      <div class="bonuses-label">Más<br>los bonos.</div>
+      <div class="bonus-list">
+        <div class="bonus-item">
+          <div class="bonus-emoji">🎥</div>
+          <div>
+            <div class="bonus-name">Video Tutorial de Setup Completo (45 min)</div>
+            <div class="bonus-desc">Thamy te lleva de la mano por toda la plantilla. Setup paso a paso para que empieces a usarla el mismo día.</div>
+          </div>
+          <div class="bonus-val">+$37</div>
+        </div>
+        <div class="bonus-item">
+          <div class="bonus-emoji">📝</div>
+          <div>
+            <div class="bonus-name">30 Ideas de Contenido por Pilar (150 ideas)</div>
+            <div class="bonus-desc">Banco de ideas listo para importar. Un mes de contenido pre-pensado para cada uno de los 5 pilares de la marca consciente.</div>
+          </div>
+          <div class="bonus-val">+$27</div>
+        </div>
+        <div class="bonus-item">
+          <div class="bonus-emoji">💬</div>
+          <div>
+            <div class="bonus-name">Acceso 30 días a la comunidad privada</div>
+            <div class="bonus-desc">Grupo privado de creadoras donde puedes hacer preguntas, compartir avances y obtener feedback de Thamy y el equipo.</div>
+          </div>
+          <div class="bonus-val">+$27</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     FOR WHO
+══════════════════════════════════════ -->
+<section class="forwho">
+  <div class="container">
+    <p class="section-tag reveal">¿Es para ti?</p>
+    <h2 class="section-title reveal reveal-delay-1">Esto fue creado<br><em>exactamente para ti</em><br>si...</h2>
+
+    <div class="forwho-grid">
+      <div class="forwho-col reveal reveal-delay-2">
+        <div class="forwho-head">✨ Sí es para ti</div>
+        <ul class="check-list">
+          <li>
+            <span class="check yes">✓</span>
+            Creas (o quieres crear) contenido en redes sociales y sientes que podrías ser más consistente
+          </li>
+          <li>
+            <span class="check yes">✓</span>
+            Tienes Notion o estás dispuesta a aprenderlo (no se necesita experiencia previa)
+          </li>
+          <li>
+            <span class="check yes">✓</span>
+            Quieres dejar de improvisar y tener un plan real de contenido que puedas seguir semana a semana
+          </li>
+          <li>
+            <span class="check yes">✓</span>
+            Te importa saber qué funciona y qué no — no solo publicar por publicar
+          </li>
+          <li>
+            <span class="check yes">✓</span>
+            Sueñas con producir tu contenido en batch y tener una semana libre
+          </li>
+          <li>
+            <span class="check yes">✓</span>
+            Estás construyendo tu marca personal y quieres hacerlo con intención desde el inicio
+          </li>
+        </ul>
+      </div>
+
+      <div class="forwho-col reveal reveal-delay-3">
+        <div class="forwho-head">🚫 Esto NO es para ti si...</div>
+        <ul class="check-list">
+          <li>
+            <span class="check no">✕</span>
+            Buscas resultados sin hacer el trabajo — la plantilla organiza, pero tú decides y creas
+          </li>
+          <li>
+            <span class="check no">✕</span>
+            Quieres una estrategia hecha por alguien más — esto te da el sistema, no el plan personalizado
+          </li>
+          <li>
+            <span class="check no">✕</span>
+            No tienes ningún interés en medir o analizar tu contenido
+          </li>
+          <li>
+            <span class="check no">✕</span>
+            Esperas que solo con tener la plantilla, el contenido se cree solo 😅
+          </li>
+        </ul>
+
+        <div style="margin-top:36px; padding:28px; background:var(--warm-white); border:1px solid var(--cream-dark);">
+          <p style="font-family:'Cormorant Garamond', serif; font-size:1.2rem; font-style:italic; color:var(--ink); line-height:1.5; margin-bottom:12px;">
+            "Si te identificaste con el primer listado, este sistema puede cambiar completamente tu relación con el contenido."
+          </p>
+          <p style="font-size:12px; color:var(--ink-soft);">— Thamy, Nómada Consciente</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     HOW IT WORKS
+══════════════════════════════════════ -->
+<section class="how">
+  <div class="container">
+    <p class="section-tag reveal">Así funciona</p>
+    <h2 class="section-title reveal reveal-delay-1">De cero a sistema<br><em>en 4 pasos.</em></h2>
+
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-line"></div>
+        <div class="step-num">01</div>
+        <div class="step-title">Compra y accede</div>
+        <p class="step-desc">Pago seguro con tarjeta o PayPal. Recibes el link de la plantilla en Notion instantáneamente en tu correo.</p>
+      </div>
+      <div class="step reveal reveal-delay-1">
+        <div class="step-line"></div>
+        <div class="step-num">02</div>
+        <div class="step-title">Duplica a tu workspace</div>
+        <p class="step-desc">Un clic y la plantilla está en tu Notion personal. Gratis o de pago — funciona en los dos planes.</p>
+      </div>
+      <div class="step reveal reveal-delay-2">
+        <div class="step-line"></div>
+        <div class="step-num">03</div>
+        <div class="step-title">Configura con el tutorial</div>
+        <p class="step-desc">Sigue el video de 45 minutos donde Thamy explica cada módulo y cómo adaptarlo a tu marca y nicho.</p>
+      </div>
+      <div class="step reveal reveal-delay-3">
+        <div class="step-num">04</div>
+        <div class="step-title">Publica con sistema</div>
+        <p class="step-desc">Carga tus ideas, organiza tu mes y entra en flujo. Tu contenido ahora tiene una casa y tú tienes claridad.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     SOCIAL PROOF
+══════════════════════════════════════ -->
+<section class="proof">
+  <div class="container">
+    <p class="section-tag reveal" style="text-align:center;">Ellas ya lo usan</p>
+    <h2 class="section-title reveal reveal-delay-1" style="text-align:center;">Lo que dicen las<br><em>creadoras.</em></h2>
+
+    <div class="proof-grid">
+      <div class="testimonial reveal">
+        <div class="stars">★★★★★</div>
+        <p class="test-text">"Llevaba meses queriendo organizar mi contenido y nunca encontraba cómo. Esta plantilla me la instalé un domingo por la tarde y el lunes ya tenía mi mes planificado. No puedo creer lo clara que me siento ahora."</p>
+        <div class="test-author">
+          <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&q=80&auto=format&fit=crop&crop=face" alt="Valentina">
+          <div>
+            <div class="test-name">Valentina M.</div>
+            <div class="test-role">Creadora de contenido wellness</div>
+          </div>
+          <span class="test-platform">IG</span>
+        </div>
+      </div>
+
+      <div class="testimonial reveal reveal-delay-1">
+        <div class="stars">★★★★★</div>
+        <p class="test-text">"El módulo de reciclaje me cambió la vida. Tenía un archivo desorganizado con videos viejos y ahora sé exactamente cuáles reutilizar, en qué formato y cuándo. Tres semanas sin crear desde cero y creciendo más que nunca."</p>
+        <div class="test-author">
+          <img src="https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=100&q=80&auto=format&fit=crop&crop=face" alt="Camila">
+          <div>
+            <div class="test-name">Camila R.</div>
+            <div class="test-role">Nómada digital · viajes y lifestyle</div>
+          </div>
+          <span class="test-platform">TikTok</span>
+        </div>
+      </div>
+
+      <div class="testimonial reveal reveal-delay-2">
+        <div class="stars">★★★★★</div>
+        <p class="test-text">"No esperaba que una plantilla de $19 me diera tanta claridad estratégica. El dashboard de pilares me hizo ver que el 80% de mi contenido era del mismo tipo — eso explica por qué no crecía. Game changer."</p>
+        <div class="test-author">
+          <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80&auto=format&fit=crop&crop=face" alt="Sofía">
+          <div>
+            <div class="test-name">Sofía L.</div>
+            <div class="test-role">Emprendedora digital · Medellín</div>
+          </div>
+          <span class="test-platform">YT + IG</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="proof-numbers reveal" style="margin-top:60px;">
+      <div class="proof-num-item">
+        <span class="proof-num-val">+200</span>
+        <div class="proof-num-label">Creadoras activas</div>
+      </div>
+      <div class="proof-num-item">
+        <span class="proof-num-val">4.9</span>
+        <div class="proof-num-label">Valoración promedio</div>
+      </div>
+      <div class="proof-num-item">
+        <span class="proof-num-val">45'</span>
+        <div class="proof-num-label">Setup promedio</div>
+      </div>
+      <div class="proof-num-item">
+        <span class="proof-num-val">0%</span>
+        <div class="proof-num-label">Devoluciones (últimos 90 días)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     GUARANTEE
+══════════════════════════════════════ -->
+<section class="guarantee">
+  <div class="guarantee-inner reveal">
+    <div class="guarantee-badge">
+      <div class="g-days">7</div>
+      <div class="g-label">días de garantía total</div>
+    </div>
+    <div>
+      <h3 class="guarantee-title">Si no es para ti,<br><em>te devuelvo el dinero.</em></h3>
+      <p class="guarantee-text">
+        Tienes 7 días completos para explorar la plantilla, configurarla y probar que funciona para ti. Si por cualquier razón sientes que no fue lo que esperabas, escríbeme y te devuelvo el 100% de tu dinero. Sin preguntas. Sin procesos complicados.
+        <br><br>
+        <strong style="color:var(--ink); font-weight:500;">Punto.</strong> Así de simple porque confío en que este sistema va a cambiar tu forma de crear.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     PRICING
+══════════════════════════════════════ -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <p class="section-tag reveal" style="text-align:center;">Está listo cuando tú lo estés</p>
+    <h2 class="section-title reveal reveal-delay-1" style="text-align:center;">Tu sistema de contenido<br><em>por menos de un café.</em></h2>
+  </div>
+
+  <div class="pricing-card-wrap" style="margin-top:48px;">
+    <div class="pricing-card reveal reveal-delay-2">
+      <div class="pricing-label">Content Calendar Pro — Edición Creadora</div>
+      <div class="pricing-name">Todo lo que necesitas para crear con sistema</div>
+
+      <div class="price-row">
+        <div class="price-was">$97</div>
+        <div class="price-now">$19</div>
+      </div>
+      <div class="price-note">Pago único · Acceso de por vida · Actualizaciones incluidas · 7 días de garantía</div>
+
+      <ul class="includes-list">
+        <li><span class="inc-check">✓</span> Banco de Ideas con sistema de etiquetas <span class="inc-val">$15</span></li>
+        <li><span class="inc-check">✓</span> Calendario Editorial mensual + semanal <span class="inc-val">$20</span></li>
+        <li><span class="inc-check">✓</span> Pipeline de Producción (Kanban) <span class="inc-val">$15</span></li>
+        <li><span class="inc-check">✓</span> Tracker de Métricas por plataforma <span class="inc-val">$15</span></li>
+        <li><span class="inc-check">✓</span> Banco de Reciclaje de Contenido <span class="inc-val">$15</span></li>
+        <li><span class="inc-check">✓</span> Dashboard Central de Pilares <span class="inc-val">$17</span></li>
+        <li><span class="inc-check">✓</span> 🎁 Video Tutorial de Setup (45 min) <span class="inc-val" style="color:var(--sage);">+$37</span></li>
+        <li><span class="inc-check">✓</span> 🎁 150 Ideas de Contenido pre-cargadas <span class="inc-val" style="color:var(--sage);">+$27</span></li>
+        <li><span class="inc-check">✓</span> 🎁 Comunidad privada 30 días <span class="inc-val" style="color:var(--sage);">+$27</span></li>
+      </ul>
+
+      <div class="value-stack-total">
+        <div>
+          <div class="vst-label">Valor total del stack</div>
+          <div class="vst-value">$188</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="vst-you-pay">Tú pagas hoy</div>
+          <div class="vst-you-price">$19 USD</div>
+        </div>
+      </div>
+
+      <a href="#" class="btn-buy">
+        Sí, quiero mi sistema ahora — $19 →
+      </a>
+
+      <div class="security-row">
+        <span class="security-item">🔒 Pago seguro</span>
+        <span class="security-item">⚡ Acceso inmediato</span>
+        <span class="security-item">↩️ Garantía 7 días</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     FAQ
+══════════════════════════════════════ -->
+<section class="faq">
+  <div class="container-narrow">
+    <p class="section-tag reveal" style="text-align:center;">Preguntas frecuentes</p>
+    <h2 class="section-title reveal reveal-delay-1" style="text-align:center;">Resolvemos<br><em>tus dudas.</em></h2>
+  </div>
+
+  <div class="faq-list reveal reveal-delay-2">
+    <div class="faq-item">
+      <div class="faq-q">¿Necesito la versión paga de Notion? <span class="faq-arrow">+</span></div>
+      <div class="faq-a">No. La plantilla funciona completamente en el plan gratuito de Notion. Solo necesitas una cuenta (que también es gratuita). Si en el futuro quieres funcionalidades adicionales, la versión paga de Notion agrega opciones, pero no son necesarias para aprovechar el 100% de esta plantilla.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">¿Para cuántas plataformas funciona? <span class="faq-arrow">+</span></div>
+      <div class="faq-a">La plantilla viene configurada para Instagram, TikTok, YouTube y Newsletter. Puedes adaptarla fácilmente a cualquier otra plataforma — Pinterest, LinkedIn, Threads — porque el sistema es flexible y personalizable. El tutorial incluye cómo hacer estas adaptaciones.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">¿Cuánto tiempo toma configurarla? <span class="faq-arrow">+</span></div>
+      <div class="faq-a">El tiempo promedio de setup siguiendo el video tutorial es 45 minutos. Creadoras con experiencia en Notion reportan hacerlo en 20-30 minutos. La idea es que el mismo día que la compras, puedas empezar a planear tu contenido con ella.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">¿Funciona si recién estoy empezando? <span class="faq-arrow">+</span></div>
+      <div class="faq-a">Perfectamente. De hecho, empezar con un sistema desde el inicio es la mejor ventaja que puedes tener. No necesitas tener audiencia ni experiencia previa en Notion. El tutorial asume que partes desde cero y te explica todo paso a paso.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">¿Cómo funciona la garantía? <span class="faq-arrow">+</span></div>
+      <div class="faq-a">Tienes 7 días desde la compra para pedir el reembolso. Si por cualquier razón sientes que no fue lo que esperabas, escríbenos a hola@nomadaconsciente.com y te devolvemos el 100% de tu dinero. Sin preguntas, sin tramitología, sin demoras.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">¿Recibo actualizaciones futuras? <span class="faq-arrow">+</span></div>
+      <div class="faq-a">Sí. Las actualizaciones están incluidas de por vida. Cuando Thamy mejora su propio sistema de contenido, las mejoras se reflejan en la plantilla y tú las recibes automáticamente. Es un producto vivo, no una descarga que se queda obsoleta.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     FINAL CTA
+══════════════════════════════════════ -->
+<section class="final-cta">
+  <div class="final-cta-inner container-narrow">
+    <h2>El mejor momento para<br>organizarte fue ayer.<br><em>El segundo mejor<br>es ahora.</em></h2>
+    <p>Cada semana sin sistema es una semana de contenido improvisado, energía desperdiciada y crecimiento lento. Todo eso termina hoy.</p>
+    <a href="#pricing" class="btn-primary">Obtener Content Calendar Pro — $19</a>
+    <p class="final-note">Garantía de 7 días · Acceso inmediato · Pago único para siempre</p>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Nómada Consciente</div>
+  <div class="footer-links">
+    <a href="#">Términos</a>
+    <a href="#">Privacidad</a>
+    <a href="#">Contacto</a>
+    <a href="#">Instagram</a>
+  </div>
+</footer>
+
+<!-- ══ JS ══ -->
+<script>
+// Custom cursor
+const dot  = document.getElementById('dot');
+const ring = document.getElementById('ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+function animateCursor() {
+  rx += (mx - rx) * 0.15;
+  ry += (my - ry) * 0.15;
+  dot.style.left  = mx + 'px';
+  dot.style.top   = my + 'px';
+  ring.style.left = rx + 'px';
+  ring.style.top  = ry + 'px';
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+document.querySelectorAll('a, button, .pain-item, .module, .faq-q').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    ring.style.width = '56px';
+    ring.style.height = '56px';
+    ring.style.borderColor = 'rgba(196,112,74,.7)';
+  });
+  el.addEventListener('mouseleave', () => {
+    ring.style.width = '36px';
+    ring.style.height = '36px';
+    ring.style.borderColor = 'rgba(196,112,74,.4)';
+  });
+});
+
+// Sticky nav
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// Scroll reveal
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12 });
+reveals.forEach(el => observer.observe(el));
+
+// FAQ accordion
+document.querySelectorAll('.faq-q').forEach(q => {
+  q.addEventListener('click', () => {
+    const item = q.parentElement;
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  });
+});
+</script>
+</body>
+</html>
